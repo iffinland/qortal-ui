@@ -46,14 +46,14 @@
 		"sm3": "Markkinat"
 	},
 	"tabmenu": {
-		"tm1": "Louhinta yksityiskohdat",
+		"tm1": "Louhinta Tietot",
 		"tm2": "Liity louhinta",
 		"tm3": "Luettelo sponsoreista",
 		"tm4": "Lompakot",
 		"tm5": "Kryptokauppaa",
 		"tm6": "Automatisoidut kryptokaupat",
 		"tm7": "Palkinnon jako",
-		"tm8": "Q-Chat",
+		"tm8": "Q-Chätti",
 		"tm9": "Nimen rekisteröinti",
 		"tm10": "Nimien markkinat",
 		"tm11": "Verkkosivustot",
@@ -101,7 +101,7 @@
 		"upload": "Lataa Qortal-varmuuskopiosi",
 		"howlogin": "Kuinka haluat kirjautua sisään?",
 		"seed": "Siemenlause",
-		"seedphrase": "siemenlause",
+		"seedphrase": "SIEMENLAUSE",
 		"saved": "Tili tallennettu",
 		"qora": "QORA osoite siemen",
 		"backup": "Qortal lompakon varmuuskopio",
@@ -126,7 +126,7 @@
 		"entername": "Kirjoita näyttönimi",
 		"downloaded": "Lompakkosi varmuuskopiotiedosto tallennettiin.",
 		"loading": "Ladataan, odota...",
-		"createdseed": "Loit alkulauseen",
+		"createdseed": "Loit siemenlauseen",
 		"saveseed": "Tallenna siemenlause",
 		"savein": "Tallenna tässä Qortal-käyttöliittymässä",
 		"backup2": "Tilin varmuuskopiotiedosto on turvallisesti salattu ja sen salaus voidaan purkaa antamallasi salasanalla, ja tämä tiedosto on AINOA TAPA päästä tilillesi, jos tiliä ei ole tallennettu Qortal UI -selaimeen. TEE TÄSTÄ TIEDOSTOSTA VARMUUSKOPIO(T), jotta et menetä pääsyä tiliisi!",
@@ -222,7 +222,7 @@
 		"coreversion": "Ytimen versio",
 		"minting": "(Louhintan)",
 		"synchronizing": "Synkronoidaan",
-		"peers": "Yhdistettyjä yhteistyökumppanit"
+		"peers": "Yhteyksiä"
 	},
 	"walletprofile": {
 		"minterlevel": "Louhinta taso",
