@@ -1,7 +1,7 @@
 {
   "__locale_name__": "Suomi",
 
-  "electron_translate_1": "Näytä Qortal-UI (käyttöliittymä)",
+  "electron_translate_1": "Näytä Qortal-UI",
   "electron_translate_2": "Lopettaat",
   "electron_translate_3": "Päivitys saatavilla",
   "electron_translate_4": "Uusi Qortal UI -versio on saatavilla. Onko mahdollista ladata sen?",
@@ -13,7 +13,7 @@
   "electron_translate_10": "Väliaikainen päivitysvirhe, yritetään myöhemmin uudelleen",
   "electron_translate_11": "LATAA PÄIVITYS",
   "electron_translate_12": "Se ladataan ⌛️ taustalla!",
-  "electron_translate_13": "START QORTAL CORE",
+  "electron_translate_13": "KÄYNNISTÄ QORTAL CORE",
   "electron_translate_14": "EI KIITOS",
   "electron_translate_15": "Qortal Core EI ole käynnissä tässä järjestelmässä",
   "electron_translate_16": "Qortal UI on havainnut, että Qortal Core EI ole käynnissä tässä järjestelmässä",
