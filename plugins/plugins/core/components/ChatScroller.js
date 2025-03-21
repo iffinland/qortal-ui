@@ -3,12 +3,13 @@ import { repeat } from 'lit/directives/repeat.js'
 import { unsafeHTML } from 'lit/directives/unsafe-html.js'
 import { Epml } from '../../../epml'
 import { cropAddress, roundToNearestDecimal } from '../../utils/functions'
-import { generateHTML } from '@tiptap/core'
+import { generateHTML, generateJSON } from '@tiptap/core'
 import { chatLimit, totalMsgCount } from './ChatPage'
 import { chatStyles } from './plugins-css'
 import isElectron from 'is-electron'
 import axios from 'axios'
 import Highlight from '@tiptap/extension-highlight'
+import Mention from '@tiptap/extension-mention'
 import ShortUniqueId from 'short-unique-id'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -176,7 +177,7 @@ function processText(input) {
 									})
 								)
 							} catch (error) {
-								console.log({ error })
+								console.error({ error })
 							}
 						})
 
@@ -279,6 +280,7 @@ class ChatScroller extends LitElement {
 
 	render() {
 		let formattedMessages = this.messagesToRender
+
 		return html`
 			${this.isLoadingBefore
 				? html`
@@ -1080,17 +1082,22 @@ class MessageTemplate extends LitElement {
 		let version = 0
 		let isForwarded = false
 		let isEdited = false
-
+		let isEncrypted = false
 
 		try {
 			const parsedMessageObj = JSON.parse(this.messageObj.decodedMessage)
 
-			if (+parsedMessageObj.version > 1 && parsedMessageObj.messageText) {
-				messageVersion2 = generateHTML(parsedMessageObj.messageText, [StarterKit, Underline, Highlight])
+			if (parsedMessageObj.version > 1 && parsedMessageObj.messageText) {
+				messageVersion2 = generateHTML(parsedMessageObj.messageText, [StarterKit, Underline, Highlight, Mention])
 				messageVersion2WithLink = processText(messageVersion2)
 			}
 
-			message = parsedMessageObj.messageText
+			if (parsedMessageObj.version > 1 && parsedMessageObj.message && !parsedMessageObj.messageText) {
+				messageVersion2 = parsedMessageObj.message
+				messageVersion2WithLink = processText(messageVersion2)
+			}
+
+			message = parsedMessageObj.messageText ? parsedMessageObj.messageText : parsedMessageObj.message
 			repliedToData = this.messageObj.repliedToData
 			isImageDeleted = parsedMessageObj.isImageDeleted
 			isGifDeleted = parsedMessageObj.isGifDeleted
@@ -1100,6 +1107,7 @@ class MessageTemplate extends LitElement {
 			version = parsedMessageObj.version
 			isForwarded = parsedMessageObj.type === 'forward'
 			isEdited = parsedMessageObj.isEdited && true
+			isEncrypted = parsedMessageObj.isFromHub || parsedMessageObj.isPrivate || parsedMessageObj.message ? true : false
 
 			if (parsedMessageObj.images && Array.isArray(parsedMessageObj.images) && parsedMessageObj.images.length > 0) {
 				image = parsedMessageObj.images[0]
@@ -1131,6 +1139,8 @@ class MessageTemplate extends LitElement {
 		let hideit = hidemsg.includes(this.messageObj.sender)
 		let forwarded = ''
 		let edited = ''
+		let encrypted = ''
+		let decrypted = ''
 
 		levelFounder = html`<level-founder checkleveladdress="${this.messageObj.sender}"></level-founder>`
 
@@ -1246,6 +1256,10 @@ class MessageTemplate extends LitElement {
 			</span>
 		`
 
+		encrypted = html`&nbsp;&nbsp;&nbsp;<mwc-icon style="font-size:16px; color: var(--chat-group);">key</mwc-icon>&nbsp;&nbsp;&nbsp;`
+
+		decrypted = html`&nbsp;&nbsp;&nbsp;<mwc-icon style="font-size:16px; color: var(--chat-group);">key_off</mwc-icon>&nbsp;&nbsp;&nbsp;`
+
 		if (repliedToData) {
 			try {
 				repliedToData.decodedMessage = JSON.parse(repliedToData.decodedMessage)
@@ -1256,7 +1270,11 @@ class MessageTemplate extends LitElement {
 
 		if (repliedToData && repliedToData.decodedMessage && repliedToData.decodedMessage.messageText) {
 			try {
-				repliedToMessageText = generateHTML(repliedToData.decodedMessage.messageText, [StarterKit, Underline, Highlight])
+				repliedToMessageText = generateHTML(repliedToData.decodedMessage.messageText, [StarterKit, Underline, Highlight, Mention])
+			} catch (error) { /* empty */ }
+		} else if (repliedToData && repliedToData.decodedMessage && repliedToData.decodedMessage.message) {
+			try {
+				repliedToMessageText = this.convertHubMessageToJson(repliedToData.decodedMessage.message)
 			} catch (error) { /* empty */ }
 		}
 
@@ -1535,9 +1553,10 @@ class MessageTemplate extends LitElement {
 												<p class="attachment-name">
 													${attachment && attachment.attachmentName}
 												</p>
-												<p class="attachment-size">
+												${attachment.attachmentSize > 0 ?
+												`<p class="attachment-size">
 													${roundToNearestDecimal(attachment.attachmentSize)} mb
-												</p>
+												</p>` : ''}
 											</div>
 											<vaadin-icon
 												@click=${async () => await this.downloadAttachment(attachment)}
@@ -1661,23 +1680,38 @@ class MessageTemplate extends LitElement {
 										${this.isInProgress ? html`
 											<p>${translate('chatpage.cchange91')}</p>
 											` : this.isAgo ? html`
-												<div id="timeformat">
-													<span>
-														<message-time timestamp=${this.messageObj.timestamp}></message-time>
-													</span>
+												<div style="display: flex; align-items: center;">
+													<div style="margin-top: 4px;">
+														${isEncrypted ? html`${encrypted}` : html`${decrypted}`}
+													</div>
+													<div id="timeformat">
+														<span>
+															<message-time timestamp=${this.messageObj.timestamp}></message-time>
+														</span>
+													</div>
 												</div>
 											` : this.isIso ? html`
-												<div id="timeformat">
-													<span>
-														${new Date(this.messageObj.timestamp).toLocaleString()}
-													</span>
+												<div style="display: flex; align-items: center;">
+													<div style="margin-top: 4px;">
+														${isEncrypted ? html`${encrypted}` : html`${decrypted}`}
+													</div>
+													<div id="timeformat">
+														<span>
+															${new Date(this.messageObj.timestamp).toLocaleString()}
+														</span>
+													</div>
 												</div>
 											` : this.isBoth ? html`
-												<div id="timeformat">
-													<span>
-														${new Date(this.messageObj.timestamp).toLocaleString()}
-														( <message-time timestamp=${this.messageObj.timestamp}></message-time> )
-													</span>
+												<div style="display: flex; align-items: center;">
+													<div style="margin-top: 4px;">
+														${isEncrypted ? html`${encrypted}` : html`${decrypted}`}
+													</div>
+													<div id="timeformat">
+														<span>
+															${new Date(this.messageObj.timestamp).toLocaleString()}
+															( <message-time timestamp=${this.messageObj.timestamp}></message-time> )
+														</span>
+													</div>
 												</div>
 											` : ''
 										}
@@ -2043,6 +2077,11 @@ class MessageTemplate extends LitElement {
 		}, 60000)
 	}
 
+	convertHubMessageToJson(message) {
+		let newJson = generateJSON(`${message}`, [StarterKit, Underline, Highlight, Mention])
+		return generateHTML(newJson, [StarterKit, Underline, Highlight, Mention])
+	}
+
 	async closeDownloadProgressDialog() {
 		const closeDelay = ms => new Promise(res => setTimeout(res, ms))
 		this.shadowRoot.getElementById('downloadProgressDialog').close()
@@ -2175,7 +2214,7 @@ class MessageTemplate extends LitElement {
 
 			await writeFile(fileHandle, blob).then(() => console.log('FILE SAVED'))
 		} catch (error) {
-			console.log(error)
+			console.error(error)
 		}
 	}
 
@@ -2326,7 +2365,13 @@ class ChatMenu extends LitElement {
 						<div
 							class=${`menu-icon ${!this.firstMessageInChat ? 'tooltip' : ''}`}
 							data-text="${translate('blockpage.bcchange12')}"
-							@click=${() => {if (this.version === '0') {this.versionErrorSnack(); return;} this.setEditedMessageObj(this.originalMessage);}}
+							@click=${() => {
+								if (this.version === '0') {
+									this.versionErrorSnack(); 
+									return;
+								}
+								this.setEditedMessageObj(this.originalMessage);
+							}}
 						>
 							<vaadin-icon icon="vaadin:pencil" slot="icon"></vaadin-icon>
 						</div>

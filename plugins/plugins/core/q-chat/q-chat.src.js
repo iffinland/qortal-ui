@@ -5,12 +5,21 @@ import { passiveSupport } from 'passive-events-support/src/utils'
 import { Editor, Extension } from '@tiptap/core'
 import { supportCountryFlagEmojis } from '../components/ChatEmojiFlags'
 import { qchatStyles } from '../components/plugins-css'
+import {
+	decryptGroupData,
+	uint8ArrayToBase64,
+	base64ToUint8Array,
+	uint8ArrayToObject,
+	validateSecretKey
+} from '../components/GroupEncryption'
+import Base58 from '../../../../crypto/api/deps/Base58'
 import isElectron from 'is-electron'
 import WebWorker from 'web-worker:./computePowWorker'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
 import Highlight from '@tiptap/extension-highlight'
+import Mention from '@tiptap/extension-mention'
 import ShortUniqueId from 'short-unique-id'
 import snackbar from '../components/snackbar'
 import '../components/ChatWelcomePage'
@@ -23,9 +32,14 @@ import '@material/mwc-button'
 import '@material/mwc-dialog'
 import '@material/mwc-icon'
 import '@material/mwc-snackbar'
+import '@material/mwc-textfield'
+import '@polymer/paper-dialog/paper-dialog.js'
+import '@polymer/iron-icons/iron-icons.js'
+import '@polymer/paper-icon-button/paper-icon-button.js'
 import '@polymer/paper-spinner/paper-spinner-lite.js'
 import '@vaadin/grid'
 import '@vaadin/tooltip'
+import '@vaadin/text-field'
 
 // Multi language support
 import { get, registerTranslateConfig, translate, use } from '../../../../core/translate'
@@ -49,6 +63,7 @@ class Chat extends LitElement {
 			messages: { type: Array },
 			btnDisable: { type: Boolean },
 			isLoading: { type: Boolean },
+			isViewOpen: { type: Boolean },
 			balance: { type: Number },
 			theme: { type: String, reflect: true },
 			blockedUsers: { type: Array },
@@ -56,6 +71,7 @@ class Chat extends LitElement {
 			privateMessagePlaceholder: { type: String },
 			imageFile: { type: Object },
 			activeChatHeadUrl: { type: String },
+			switchChatHeadUrl: { type: String },
 			openPrivateMessage: { type: Boolean },
 			userFound: { type: Array },
 			userFoundModalOpen: { type: Boolean },
@@ -89,6 +105,7 @@ class Chat extends LitElement {
 		this.messages = []
 		this.btnDisable = false
 		this.isLoading = false
+		this.isViewOpen = false
 		this.showNewMessageBar = this.showNewMessageBar.bind(this)
 		this.hideNewMessageBar = this.hideNewMessageBar.bind(this)
 		this.setOpenPrivateMessage = this.setOpenPrivateMessage.bind(this)
@@ -100,6 +117,7 @@ class Chat extends LitElement {
 		this.privateMessagePlaceholder = ''
 		this.imageFile = null
 		this.activeChatHeadUrl = ''
+		this.switchChatHeadUrl = ''
 		this.openPrivateMessage = false
 		this.userFound = []
 		this.userFoundModalOpen = false
@@ -127,6 +145,17 @@ class Chat extends LitElement {
 							</vaadin-tooltip>
 						</div>
 						<div style="display:flex; align-items:center;gap:10px">
+							<div id="viewChat" class="create-chat" @click=${() => { this.openView(this.activeChatHeadUrl) }}>
+								<mwc-icon style="color: var(--black);">pageview</mwc-icon>
+								<vaadin-tooltip
+									for="viewChat"
+									position="top"
+									hover-delay=${200}
+									hide-delay=${1}
+									text="Switch Chat Over ID"
+								>
+								</vaadin-tooltip>
+							</div>
 							<div id="goToGroup" class="create-chat" @click=${() => { this.openTabToGroupManagement() }}>
 								<mwc-icon style="color: var(--black);">group_add</mwc-icon>
 								<vaadin-tooltip
@@ -161,7 +190,11 @@ class Chat extends LitElement {
 						<span>${translate("chatpage.cchange5")} <mwc-icon style="font-size: 16px; vertical-align: bottom;">keyboard_arrow_down</mwc-icon></span>
 					</div>
 					<div class="chat-history">
-						${this.activeChatHeadUrl ? html`${this.renderChatPage()}` : html`${this.renderChatWelcomePage()}`}
+						${this.activeChatHeadUrl ?
+							html`${this.renderChatPage()}`
+							: this.isViewOpen ? html`${this.renderChatViewPage()}`
+							: html`${this.renderChatWelcomePage()}`
+						}
 					</div>
 				</div>
 				<!-- Start Chatting Dialog -->
@@ -290,6 +323,26 @@ class Chat extends LitElement {
 						${translate("general.close")}
 					</mwc-button>
 				</mwc-dialog>
+				<!-- View Chat Over ID -->
+				<paper-dialog id="viewChatDialog" class="viewSettings" modal>
+					<div style="display: inline;">
+						<div class="view">
+							<vaadin-text-field
+								style="width: 350px"
+								id="groupIdInput"
+								required
+								allowed-char-pattern="[0-9]"
+								placeholder="${translate("modals.mpchange87")}"
+								value=""
+								@keydown="${this.viewKeyListener}"
+								clear-button-visible
+							>
+							</vaadin-text-field>
+							<paper-icon-button icon="icons:visibility" @click="${() => this.switchChatID()}" title="${translate("general.view")}"></paper-icon-button>
+							<paper-icon-button icon="icons:close" @click="${() => this.closeView()}" title="${translate("general.close")}"></paper-icon-button>
+						</div>
+					</div>
+				</paper-dialog>
 			</div>
 		`
 	}
@@ -428,9 +481,222 @@ class Chat extends LitElement {
 		}, 60000)
 	}
 
+	async switchChatID() {
+		let viewGroupID = 0
+		let checkTheID = {}
+		let notFound = 'Group ID not found! Please try again...'
+		let wentWrong = 'Something went wrong! Please try again...'
+
+		viewGroupID = this.shadowRoot.getElementById('groupIdInput').value
+
+		await parentEpml.request('apiCall', {
+			url: `/groups/${viewGroupID}`
+		}).then(res => {
+			checkTheID = res
+		})
+
+		if (checkTheID.error) {
+			this.shadowRoot.getElementById('viewChatDialog').close()
+			this.shadowRoot.getElementById('groupIdInput').value = ''
+			this.isViewOpen = false
+			this.activeChatHeadUrl = this.switchChatHeadUrl
+			this.switchChatHeadUrl = ''
+			this.resetChatEditor()
+			parentEpml.request('showSnackBar', `${notFound}`)
+		} else if (checkTheID.groupId) {
+			let switchToID = checkTheID.groupName
+			this.shadowRoot.getElementById('viewChatDialog').close()
+			this.shadowRoot.getElementById('groupIdInput').value = ''
+			this.switchChatHeadUrl = ''
+			parentEpml.request('showSnackBar', `${switchToID}`)
+			this.processChatID(checkTheID.groupId)
+		} else {
+			this.shadowRoot.getElementById('viewChatDialog').close()
+			this.shadowRoot.getElementById('groupIdInput').value = ''
+			this.isViewOpen = false
+			this.activeChatHeadUrl = this.switchChatHeadUrl
+			this.switchChatHeadUrl = ''
+			this.resetChatEditor()
+			parentEpml.request('showSnackBar', `${wentWrong}`)
+		}
+	}
+
+	openView(currentUrl) {
+		this.switchChatHeadUrl = currentUrl
+		this.activeChatHeadUrl = ''
+		this.isViewOpen = true
+		this.shadowRoot.getElementById('viewChatDialog').open()
+		this.shadowRoot.getElementById('groupIdInput').value = ''
+		this.resetChatEditor()
+	}
+
+	closeView() {
+		this.shadowRoot.getElementById('viewChatDialog').close()
+		this.shadowRoot.getElementById('groupIdInput').value = ''
+		this.isViewOpen = false
+		this.activeChatHeadUrl = this.switchChatHeadUrl
+		this.switchChatHeadUrl = ''
+		this.resetChatEditor()
+	}
+
+	viewKeyListener(e) {
+		if (e.key === 'Enter') {
+			this.switchChatID()
+		}
+	}
+
+	async processChatID(newID) {
+		let viewNewUrl = 'group/' + newID
+		this.setActiveChatHeadUrl(viewNewUrl)
+		this.resetChatEditor()
+	}
+
 	async setActiveChatHeadUrl(url) {
-		this.activeChatHeadUrl = url
-		this.requestUpdate()
+		await this.getSymKeyFile(url)
+		this.isViewOpen = false
+	}
+
+	async getSymKeyFile(url) {
+		this.secretKeys = {}
+		this.groupAdmins = {}
+
+		let data
+		let supArray = []
+		let allSymKeys = []
+		let gAdmin = ''
+		let gAddress = ''
+		let currentGroupId = url.substring(6)
+		let symIdentifier = 'symmetric-qchat-group-' + currentGroupId
+		let locateString = "Downloading and decrypt keys! Please wait..."
+		let keysToOld = "Wait until an admin re-encrypts the keys. Only unencrypted messages will be displayed."
+		let retryDownload = "Retry downloading and decrypt keys in 5 seconds! Please wait..."
+		let failDownload = "Error downloading and decrypt keys! Only unencrypted messages will be displayed. Please try again later..."
+		let all_ok = false
+		let counter = 0
+
+		const myNode = window.parent.reduxStore.getState().app.nodeConfig.knownNodes[window.parent.reduxStore.getState().app.nodeConfig.node]
+		const nodeUrl = myNode.protocol + '://' + myNode.domain + ':' + myNode.port
+		const getNameUrl = `${nodeUrl}/arbitrary/resources?service=DOCUMENT_PRIVATE&identifier=${symIdentifier}&limit=0&reverse=true`
+		const getAdminUrl = `${nodeUrl}/groups/members/${currentGroupId}?onlyAdmins=true&limit=0`
+
+		if (localStorage.getItem("symKeysCurrent") === null) {
+			localStorage.setItem("symKeysCurrent", "")
+		}
+
+		supArray = await fetch(getNameUrl).then(response => {
+			return response.json()
+		})
+
+		if (this.isEmptyArray(supArray) || currentGroupId === 0) {
+			this.activeChatHeadUrl = url
+			this.requestUpdate()
+		} else {
+			parentEpml.request('showSnackBar', `${locateString}`)
+
+			supArray.forEach(item => {
+				const symInfoObj = {
+					name: item.name,
+					identifier: item.identifier,
+					timestamp: item.updated ? item.updated : item.created
+				}
+				allSymKeys.push(symInfoObj)
+			})
+
+			let allSymKeysSorted = allSymKeys.sort(function(a, b) {
+				return b.timestamp - a.timestamp
+			})
+
+			gAdmin = allSymKeysSorted[0].name
+
+			const addressUrl = `${nodeUrl}/names/${gAdmin}`
+
+			let addressObject = await fetch(addressUrl).then(response => {
+				return response.json()
+			})
+
+			gAddress = addressObject.owner
+
+			let adminRes = await fetch(getAdminUrl).then(response => {
+				return response.json()
+			})
+
+			this.groupAdmins = adminRes.members
+
+			const adminExists = (adminAddress) => {
+				return this.groupAdmins.some(function(checkAdmin) {
+					return checkAdmin.member === adminAddress
+				})
+			}
+
+			if (adminExists(gAddress)) {
+				const sleep = (t) => new Promise(r => setTimeout(r, t))
+				const dataUrl = `${nodeUrl}/arbitrary/DOCUMENT_PRIVATE/${gAdmin}/${symIdentifier}?encoding=base64`
+				const res = await fetch(dataUrl)
+
+				do {
+					counter++
+
+					if (!res.ok) {
+						parentEpml.request('showSnackBar', `${retryDownload}`)
+						await sleep(5000)
+					} else {
+						data = await res.text()
+						all_ok = true
+					}
+
+					if (counter > 10) {
+						parentEpml.request('showSnackBar', `${failDownload}`)
+						this.activeChatHeadUrl = url
+						this.requestUpdate()
+						return
+					}
+				} while (!all_ok)
+
+				const decryptedKey = await this.decryptGroupEncryption(data)
+
+				if (decryptedKey === undefined) {
+					parentEpml.request('showSnackBar', `${keysToOld}`)
+					this.activeChatHeadUrl = url
+					this.requestUpdate()
+				} else {
+					const dataint8Array = base64ToUint8Array(decryptedKey.data)
+					const decryptedKeyToObject = uint8ArrayToObject(dataint8Array)
+
+					if (!validateSecretKey(decryptedKeyToObject)) {
+						throw new Error("SecretKey is not valid")
+					}
+
+					localStorage.removeItem("symKeysCurrent")
+					localStorage.setItem("symKeysCurrent", "")
+					let oldSymIdentifier = JSON.parse(localStorage.getItem("symKeysCurrent") || "[]")
+					oldSymIdentifier.push(decryptedKeyToObject)
+					localStorage.setItem("symKeysCurrent", JSON.stringify(oldSymIdentifier))
+
+					let arraySecretKeys = JSON.parse(localStorage.getItem("symKeysCurrent") || "[]")
+
+					this.secretKeys = arraySecretKeys[0]
+					this.activeChatHeadUrl = url
+					this.requestUpdate()
+				}
+			} else {
+				this.activeChatHeadUrl = url
+				this.requestUpdate()
+			}
+		}
+
+	}
+
+	async decryptGroupEncryption(data) {
+		try {
+			const privateKey = Base58.encode(window.parent.reduxStore.getState().app.wallet._addresses[0].keyPair.privateKey)
+			const encryptedData = decryptGroupData(data, privateKey)
+			return {
+				data: uint8ArrayToBase64(encryptedData.decryptedData),
+				count: encryptedData.count
+			}
+		} catch (error) {
+			console.log("Error:", error.message)
+		}
 	}
 
 	resetChatEditor() {
@@ -461,6 +727,7 @@ class Chat extends LitElement {
 				StarterKit,
 				Underline,
 				Highlight,
+				Mention,
 				Placeholder.configure({
 					placeholder: 'Write something …'
 				}),
@@ -905,6 +1172,22 @@ class Chat extends LitElement {
 		`
 	}
 
+	renderChatViewPage() {
+		return html`
+			<div class="view-grid">
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+			</div>
+		`
+	}
+
 	renderChatHead(chatHeadArr) {
 		return chatHeadArr.map(eachChatHead => {
 			return html`<chat-head activeChatHeadUrl=${this.activeChatHeadUrl} .setActiveChatHeadUrl=${(val) => this.setActiveChatHeadUrl(val)} chatInfo=${JSON.stringify(eachChatHead)}></chat-head>`
@@ -959,6 +1242,20 @@ class Chat extends LitElement {
 		}
 	}
 
+	async getGroupType(newGroupId) {
+		try {
+			const myNode = window.parent.reduxStore.getState().app.nodeConfig.knownNodes[window.parent.reduxStore.getState().app.nodeConfig.node]
+			const nodeUrl = myNode.protocol + '://' + myNode.domain + ':' + myNode.port
+			const response = await fetch(`${nodeUrl}/groups/${newGroupId}`)
+			const data = await response.json()
+
+			return data.isOpen
+		} catch (error) {
+			console.error('Error fetching group type', error)
+			throw error
+		}
+	}
+
 	async setChatHeads(chatObj) {
 		const chatObjGroups = Array.isArray(chatObj.groups) ? chatObj.groups : []
 		const chatObjDirect = Array.isArray(chatObj.direct) ? chatObj.direct : []
@@ -968,12 +1265,14 @@ class Chat extends LitElement {
 			url: `group/${group.groupId}`,
 			groupName: 'Qortal General Chat',
 			timestamp: group.timestamp === undefined ? 2 : group.timestamp,
-			sender: group.sender
+			sender: group.sender,
+			isOpen: true
 		} : {
 			...group,
 			timestamp: group.timestamp === undefined ? 1 : group.timestamp,
 			url: `group/${group.groupId}`,
-			ownerName: group.ownerName === undefined ? await this.getOwnerName(group.groupId) : 'undefined'
+			ownerName: group.ownerName === undefined ? await this.getOwnerName(group.groupId) : 'undefined',
+			isOpen: group.isOpen === undefined ? await this.getGroupType(group.groupId) : true
 		}))
 
 		let directList = chatObjDirect.map(dc => {

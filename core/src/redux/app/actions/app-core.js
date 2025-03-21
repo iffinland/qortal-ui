@@ -24,7 +24,11 @@ import {
 	ALLOW_QAPP_FRIENDS_LIST,
 	REMOVE_QAPP_FRIENDS_LIST,
 	ALLOW_SHOW_SYNC_INDICATOR,
-	REMOVE_SHOW_SYNC_INDICATOR
+	REMOVE_SHOW_SYNC_INDICATOR,
+	ALLOW_QAPP_AUTO_BALANCE,
+	REMOVE_QAPP_AUTO_BALANCE,
+	ALLOW_QAPP_AUTO_TRANSACTIONS,
+	REMOVE_QAPP_AUTO_TRANSACTIONS
 } from '../app-action-types'
 
 export const doUpdateBlockInfo = (blockObj) => {
@@ -118,6 +122,34 @@ export const removeQAPPAutoAuth = (payload) => {
 		type: REMOVE_QAPP_AUTO_AUTH,
 		payload
 	}
+}
+
+export const allowQAPPAutoBalance = (payload) => {
+    return {
+        type: ALLOW_QAPP_AUTO_BALANCE,
+        payload
+    }
+}
+
+export const removeQAPPAutoBalance = (payload) => {
+    return {
+        type: REMOVE_QAPP_AUTO_BALANCE,
+        payload
+    }
+}
+
+export const allowQAPPAutoTransactions = (payload) => {
+    return {
+        type: ALLOW_QAPP_AUTO_TRANSACTIONS,
+        payload
+    }
+}
+
+export const removeQAPPAutoTransactions = (payload) => {
+    return {
+        type: REMOVE_QAPP_AUTO_TRANSACTIONS,
+        payload
+    }
 }
 
 export const allowQAPPAutoLists = (payload) => {

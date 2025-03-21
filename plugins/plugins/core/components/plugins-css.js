@@ -1649,7 +1649,7 @@ export const chatStyles = css`
         position: absolute;
         top: 5px;
         left: 10px;
-        height: 75%;
+        height: 85%;
         width: 2.6px;
         background-color: var(--mdc-theme-primary);
     }
@@ -1669,7 +1669,7 @@ export const chatStyles = css`
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 500px;
-        max-height: 40px;
+        max-height: 80px;
         margin: 0;
         padding: 0;
     }
@@ -2014,8 +2014,13 @@ export const chatStyles = css`
     }
 
     #messageContent code {
-        background-color: rgba(#616161, 0.1);
-        color: #616161;
+        background: #0D0D0D;
+        color: #FFF;
+        font-family: 'JetBrainsMono', monospace;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        white-space: pre-wrap;
+        margin-top: 10px;
     }
 
     #messageContent pre {
@@ -2034,12 +2039,10 @@ export const chatStyles = css`
         font-size: 0.8rem;
     }
 
-
     #messageContent img {
         width: 1.7em;
         height: 1.5em;
         margin: 0px;
-
     }
 
     #messageContent blockquote {
@@ -2078,8 +2081,13 @@ export const chatStyles = css`
     }
 
     .replied-message code {
-        background-color: rgba(#616161, 0.1);
-        color: #616161;
+        background: #0D0D0D;
+        color: #FFF;
+        font-family: 'JetBrainsMono', monospace;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        white-space: pre-wrap;
+        margin: 0px;
     }
 
     .replied-message pre {
@@ -7138,18 +7146,28 @@ export const qchatStyles = css`
     * {
         --mdc-theme-primary: rgb(3, 169, 244);
         --mdc-theme-secondary: var(--mdc-theme-primary);
-        --paper-input-container-focus-color: var(--mdc-theme-primary);
         --mdc-theme-surface: var(--white);
         --mdc-dialog-content-ink-color: var(--black);
+        --mdc-dialog-min-width: 750px;
         --lumo-primary-text-color: rgb(0, 167, 245);
         --lumo-primary-color-50pct: rgba(0, 167, 245, 0.5);
         --lumo-primary-color-10pct: rgba(0, 167, 245, 0.1);
         --lumo-primary-color: hsl(199, 100%, 48%);
+        --lumo-secondary-text-color: var(--sectxt);
+        --lumo-contrast-60pct: var(--vdicon);
+        --item-selected-color: var(--nav-selected-color);
         --lumo-base-color: var(--white);
         --lumo-body-text-color: var(--black);
         --_lumo-grid-border-color: var(--border);
         --_lumo-grid-secondary-border-color: var(--border2);
-        --mdc-dialog-min-width: 750px;
+        --item-selected-color-text: var(--nav-selected-color-text);
+        --item-color-active: var(--nav-color-active);
+        --item-color-hover: var(--nav-color-hover);
+        --item-text-color: var(--nav-text-color);
+        --item-icon-color: var(--nav-icon-color);
+        --item-border-color: var(--nav-border-color);
+        --item-border-selected-color: var(--nav-border-selected-color);
+        --paper-input-container-focus-color: var(--mdc-theme-primary);
     }
 
     paper-spinner-lite {
@@ -7440,6 +7458,10 @@ export const qchatStyles = css`
         --mdc-theme-primary: red;
     }
 
+    .green {
+        --mdc-theme-primary: #198754;
+    }
+
     h2 {
         margin: 0;
     }
@@ -7597,6 +7619,154 @@ export const qchatStyles = css`
         gap: 10px;
         color: #04aa2e;
         font-size: 13px;
+    }
+
+    .close-check {
+        color: var(--black);
+        font-size: 14px;
+        font-weight: bold;
+        position: absolute;
+        top: -15px;
+        right: -15px;
+    }
+
+    .close-check:hover {
+        color: #df3636;
+    }
+
+    paper-dialog.check {
+        width: auto;
+        max-width: 50vw;
+        height: auto;
+        max-height: 30vh;
+        background-color: var(--white);
+        color: var(--black);
+        border: 1px solid var(--black);
+        border-radius: 15px;
+        text-align: center;
+        padding: 15px;
+        line-height: 1.6;
+        overflow: hidden;
+    }
+
+    paper-dialog.close-check {
+        min-width: 550px;
+        max-width: 550px;
+        height: auto;
+        background-color: var(--white);
+        color: var(--black);
+        border: 1px solid var(--black);
+        border-radius: 15px;
+        text-align: center;
+        padding: 15px;
+        font-size: 17px;
+        font-weight: 500;
+        line-height: 20px;
+        overflow: hidden;
+    }
+
+    .view-grid {
+        width: 120px;
+        height: 120px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+    }
+
+    .view-grid div {
+        position: absolute;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #03a9f4;
+        animation: view-grid 1.2s linear infinite;
+    }
+
+    .view-grid div:nth-child(1) {
+        top: 4px;
+        left: 4px;
+        animation-delay: 0s;
+    }
+
+    .view-grid div:nth-child(2) {
+        top: 4px;
+        left: 48px;
+        animation-delay: -0.4s;
+    }
+
+    .view-grid div:nth-child(3) {
+        top: 4px;
+        left: 90px;
+        animation-delay: -0.8s;
+    }
+
+    .view-grid div:nth-child(4) {
+        top: 50px;
+        left: 4px;
+        animation-delay: -0.4s;
+    }
+
+    .view-grid div:nth-child(5) {
+        top: 50px;
+        left: 48px;
+        animation-delay: -0.8s;
+    }
+
+    .view-grid div:nth-child(6) {
+        top: 50px;
+        left: 90px;
+        animation-delay: -1.2s;
+    }
+
+    .view-grid div:nth-child(7) {
+        top: 95px;
+        left: 4px;
+        animation-delay: -0.8s;
+    }
+
+    .view-grid div:nth-child(8) {
+        top: 95px;
+        left: 48px;
+        animation-delay: -1.2s;
+    }
+
+    .view-grid div:nth-child(9) {
+        top: 95px;
+        left: 90px;
+        animation-delay: -1.6s;
+    }
+
+    @keyframes view-grid {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    paper-dialog.viewSettings {
+        min-width: 525px;
+        max-width: 525px;
+        min-height: auto;
+        max-height: 150px;
+        background-color: var(--white);
+        color: var(--black);
+        line-height: 1.6;
+        overflow: hidden;
+        border: 1px solid var(--black);
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0px 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .view {
+        display: inline;
+        width: 50%;
+        align-items: center;
     }
 `
 
@@ -8363,7 +8533,7 @@ export const groupManagementStyles = css`
         position: absolute;
         top: 5px;
         left: 10px;
-        height: 75%;
+        height: 85%;
         width: 2.6px;
         background-color: var(--mdc-theme-primary);
     }
@@ -8387,7 +8557,7 @@ export const groupManagementStyles = css`
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 500px;
-        max-height: 40px;
+        max-height: 80px;
         margin: 0;
         padding: 0;
     }
@@ -12230,6 +12400,10 @@ export const webBrowserModalStyles = css`
         z-index: 1000001;
     }
 
+    .modal-body {
+        padding: 25px;
+    }
+
     @keyframes modal_transition {
         0% {
             visibility: hidden;
@@ -12253,8 +12427,30 @@ export const webBrowserModalStyles = css`
         justify-content: space-between;
     }
 
-    .modal-body {
-        padding: 25px;
+    .modal-content-error {
+        background-color: #ffdddd;
+        border-radius: 15px;
+	border: 1px solid var(--black);
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        max-width: 80%;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .modal-content-success {
+        background-color: #ddffdd;
+        border-radius: 15px;
+	border: 1px solid var(--black);
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        max-width: 80%;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .modal-subcontainer {
@@ -12266,22 +12462,23 @@ export const webBrowserModalStyles = css`
     }
 
     .modal-subcontainer-error {
-        color: var(--black);
+        color: 000;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 15px;
+        gap: 1ßpx;
         overflow: auto;
         max-height: calc(95vh - 250px);
     }
 
-    .modal-paragraph-error {
-        font-family: Roboto, sans-serif;
-        font-size: 20px;
-        letter-spacing: 0.3px;
-        font-weight: 700;
-        color: var(--black);
-        margin: 0;
+    .modal-subcontainer-success {
+        color: 000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        overflow: auto;
+        max-height: calc(95vh - 250px);
     }
 
     .modal-paragraph {
@@ -12290,6 +12487,50 @@ export const webBrowserModalStyles = css`
         letter-spacing: 0.3px;
         font-weight: 300;
         color: var(--black);
+        margin: 0;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .modal-paragraph-error {
+        font-family: Roboto, sans-serif;
+        font-size: 16px;
+        letter-spacing: 0.3px;
+        font-weight: 600;
+        color: 000;
+        margin: 0;
+        word-wrap: break-word;
+        overflow-wrap: break-wor
+    }
+
+    .modal-paragraph-success {
+        font-family: Roboto, sans-serif;
+        font-size: 16px;
+        letter-spacing: 0.3px;
+        font-weight: 600;
+        color: 000;
+        margin: 0;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .modal-paragraph-error-header {
+        font-family: Roboto, sans-serif;
+        font-size: 18px;
+        letter-spacing: 0.3px;
+        font-weight: 700;
+        color: 000;
+        margin: 0;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .modal-paragraph-success-header {
+        font-family: Roboto, sans-serif;
+        font-size: 18px;
+        letter-spacing: 0.3px;
+        font-weight: 700;
+        color: 000;
         margin: 0;
         word-wrap: break-word;
         overflow-wrap: break-word;

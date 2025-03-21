@@ -8,7 +8,11 @@ import {
 	removeQAPPAutoAuth,
 	removeQAPPAutoFriendsList,
 	removeQAPPAutoLists,
-	setIsOpenDevDialog
+	setIsOpenDevDialog,
+	allowQAPPAutoBalance,
+	removeQAPPAutoBalance,
+	allowQAPPAutoTransactions,
+	removeQAPPAutoTransactions
 } from '../../redux/app/app-actions'
 import { securityViewStyles } from '../../styles/core-css'
 import FileSaver from 'file-saver'
@@ -80,6 +84,18 @@ class SecurityView extends connect(store)(LitElement) {
 					<mwc-checkbox style="margin-right: -15px;" id="authButton" @click=${(e) => this.checkForAuth(e)} ?checked=${store.getState().app.qAPPAutoAuth}></mwc-checkbox>
 				</div>
 				<div class="checkbox-row">
+					<label for="balanceButton" id="balanceButtonLabel" style="color: var(--black);">
+						${get('modals.mpchange86')}
+					</label>
+					<mwc-checkbox style="margin-right: -15px;" id="balanceButton" @click=${(e) => this.checkForBalance(e)} ?checked=${store.getState().app.qAPPAutoBalance}></mwc-checkbox>
+				</div>
+				<div class="checkbox-row">
+					<label for="transactionsButton" id="transactionsButtonLabel" style="color: var(--black);">
+						Always allow wallet txs to be retrieved automatically
+					</label>
+					<mwc-checkbox style="margin-right: -15px;" id="transactionsButton" @click=${(e) => this.checkForTransactions(e)} ?checked=${store.getState().app.qAPPAutoTransactions}></mwc-checkbox>
+				</div>
+				<div class="checkbox-row">
 					<label for="authButton" id="authButtonLabel" style="color: var(--black);">
 						${get('browserpage.bchange39')}
 					</label>
@@ -105,6 +121,22 @@ class SecurityView extends connect(store)(LitElement) {
 			store.dispatch(removeQAPPAutoAuth(false))
 		} else {
 			store.dispatch(allowQAPPAutoAuth(true))
+		}
+	}
+
+	checkForBalance(e) {
+		if (e.target.checked) {
+			store.dispatch(removeQAPPAutoBalance(false))
+		} else {
+			store.dispatch(allowQAPPAutoBalance(true))
+		}
+	}
+
+	checkForTransactions(e) {
+		if (e.target.checked) {
+			store.dispatch(removeQAPPAutoTransactions(false))
+		} else {
+			store.dispatch(allowQAPPAutoTransactions(true))
 		}
 	}
 

@@ -40,7 +40,11 @@ import {
 	ALLOW_QAPP_FRIENDS_LIST,
 	REMOVE_QAPP_FRIENDS_LIST,
 	ALLOW_SHOW_SYNC_INDICATOR,
-	REMOVE_SHOW_SYNC_INDICATOR
+	REMOVE_SHOW_SYNC_INDICATOR,
+	ALLOW_QAPP_AUTO_BALANCE,
+	REMOVE_QAPP_AUTO_BALANCE,
+	ALLOW_QAPP_AUTO_TRANSACTIONS,
+	REMOVE_QAPP_AUTO_TRANSACTIONS
 } from './app-action-types'
 import { initWorkersReducer } from './reducers/init-workers'
 import { loginReducer } from './reducers/login-reducer'
@@ -89,6 +93,8 @@ const INITIAL_STATE = {
 	qAPPAutoLists: loadStateFromLocalStorage('qAPPAutoLists') || false,
 	qAPPFriendsList: loadStateFromLocalStorage('qAPPFriendsList') || false,
 	showSyncIndicator: loadStateFromLocalStorage('showSyncIndicator') || false,
+	qAPPAutoBalance: loadStateFromLocalStorage('qAPPAutoBalance') || false,
+	qAPPAutoTransactions: loadStateFromLocalStorage('qAPPAutoTransactions') || false,
 	chatLastSeen: [],
 	newTab: null,
 	tabInfo: {},
@@ -248,6 +254,38 @@ export default (state = INITIAL_STATE, action) => {
 			return {
 				...state,
 				qAPPAutoAuth: action.payload
+			}
+		}
+
+		case ALLOW_QAPP_AUTO_BALANCE: {
+			saveStateToLocalStorage("qAPPAutoBalance", true)
+			return {
+				...state,
+				qAPPAutoBalance: action.payload
+			}
+		}
+
+		case REMOVE_QAPP_AUTO_BALANCE: {
+			saveStateToLocalStorage("qAPPAutoBalance", false)
+			return {
+				...state,
+				qAPPAutoBalance: action.payload
+			}
+		}
+
+		case ALLOW_QAPP_AUTO_TRANSACTIONS: {
+			saveStateToLocalStorage("qAPPAutoTransactions", true)
+			return {
+				...state,
+				qAPPAutoTransactions: action.payload
+			}
+		}
+
+		case REMOVE_QAPP_AUTO_TRANSACTIONS: {
+			saveStateToLocalStorage("qAPPAutoTransactions", false)
+			return {
+				...state,
+				qAPPAutoTransactions: action.payload
 			}
 		}
 

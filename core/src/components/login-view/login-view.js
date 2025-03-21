@@ -18,7 +18,11 @@ import {
 	setNewNotification,
 	setNewTab,
 	setSideEffectAction,
-	setTabNotifications
+	setTabNotifications,
+	allowQAPPAutoBalance,
+	removeQAPPAutoBalance,
+	allowQAPPAutoTransactions,
+	removeQAPPAutoTransactions
 } from '../../redux/app/app-actions'
 import settings from '../../functional-components/settings-page'
 import './welcome-page'
@@ -52,7 +56,11 @@ window.reduxAction = {
 	allowQAPPAutoFriendsList: allowQAPPAutoFriendsList,
 	removeQAPPAutoFriendsList: removeQAPPAutoFriendsList,
 	allowShowSyncIndicator: allowShowSyncIndicator,
-	removeShowSyncIndicator: removeShowSyncIndicator
+	removeShowSyncIndicator: removeShowSyncIndicator,
+	allowQAPPAutoBalance: allowQAPPAutoBalance,
+	removeQAPPAutoBalance: removeQAPPAutoBalance,
+	allowQAPPAutoTransactions: allowQAPPAutoTransactions,
+	removeQAPPAutoTransactions: removeQAPPAutoTransactions
 }
 
 const animationDuration = 0.7 // Seconds
